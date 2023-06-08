@@ -1,0 +1,37 @@
+const express = require('express');
+const path = require('path');
+const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+// Serve static files from the "client/build" directory
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Define a route for the root URL
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+// Handle Socket.IO connections
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  // Handle chat messages
+  socket.on('chat message', (message) => {
+    console.log('Message:', message);
+
+    // Broadcast the message to all connected clients
+    io.emit('chat message', message);
+  });
+
+  // Handle user disconnection
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+});
+
+// Start the server
+const port = process.env.PORT || 3000;
+http.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
