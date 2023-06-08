@@ -1,0 +1,110 @@
+const express = require('express');
+const path = require('path');
+const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
+// Serve static files from the "client/build" directory
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Enable JSON body parsing
+app.use(express.json());
+
+// In-memory data store (replace this with a database in a production app)
+let messages = [];
+
+// Get all messages
+app.get('/api/messages', (req, res) => {
+  res.json(messages);
+});
+
+// Get a single message by ID
+app.get('/api/messages/:id', (req, res) => {
+  const messageId = req.params.id;
+  const message = messages.find((msg) => msg.id === messageId);
+
+  if (message) {
+    res.json(message);
+  } else {
+    res.status(404).json({ error: 'Message not found' });
+  }
+});
+
+// Create a new message
+app.post('/api/messages', (req, res) => {
+  const { text, sender } = req.body;
+
+  const newMessage = {
+    id: String(Date.now()),
+    text,
+    sender,
+  };
+
+  messages.push(newMessage);
+
+  // Emit the new message to all connected clients
+  io.emit('chat message', newMessage);
+
+  res.status(201).json(newMessage);
+});
+
+// Update a message
+app.put('/api/messages/:id', (req, res) => {
+  const messageId = req.params.id;
+  const { text } = req.body;
+
+  const message = messages.find((msg) => msg.id === messageId);
+
+  if (message) {
+    message.text = text;
+
+    // Emit the updated message to all connected clients
+    io.emit('chat message', message);
+
+    res.json(message);
+  } else {
+    res.status(404).json({ error: 'Message not found' });
+  }
+});
+
+// Delete a message
+app.delete('/api/messages/:id', (req, res) => {
+  const messageId = req.params.id;
+
+  const index = messages.findIndex((msg) => msg.id === messageId);
+
+  if (index !== -1) {
+    const deletedMessage = messages.splice(index, 1)[0];
+
+    // Emit the deleted message ID to all connected clients
+    io.emit('message deleted', deletedMessage.id);
+
+    res.sendStatus(204);
+  } else {
+    res.status(404).json({ error: 'Message not found' });
+  }
+});
+
+// Handle Socket.IO connections
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  // Handle chat messages
+  socket.on('chat message', (message) => {
+    console.log('Message:', message);
+
+    // Broadcast the message to all connected clients
+    io.emit('chat message', message);
+  });
+
+  // Handle user disconnection
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+});
+
+// Start the server
+const port = process.env.PORT || 3000;
+http.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
