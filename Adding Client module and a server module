@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Chat App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/client.js"></script>
+  </body>
+</html>
+
+// Create WebSocket connection
+const socket = io();
+
+// Function to handle new chat messages
+function handleNewMessage(message) {
+  console.log('Received new message:', message);
+  // TODO: Display the new message in the chat UI
+}
+
+// Function to handle deleted chat messages
+function handleDeletedMessage(messageId) {
+  console.log('Message deleted:', messageId);
+  // TODO: Remove the deleted message from the chat UI
+}
+
+// Function to send chat messages
+function sendMessage(text, sender) {
+  const message = {
+    text,
+    sender,
+  };
+
+  socket.emit('chat message', message);
+}
+
+// Function to handle incoming chat messages
+socket.on('chat message', handleNewMessage);
+
+// Function to handle deleted messages
+socket.on('message deleted', handleDeletedMessage);
+
+// Connect to the server
+socket.on('connect', () => {
+  console.log('Connected to server');
+  // TODO: Perform any necessary initializations or UI setup
+});
+
+// Disconnect from the server
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  // TODO: Perform any necessary cleanups or UI updates
+});
+
+// Serve client.js as a static file
+app.get('/client.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client.js'));
+});
