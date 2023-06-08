@@ -1,0 +1,27 @@
+npm init -y
+npm install express react react-dom
+const express = require('express');
+const path = require('path');
+const app = express();
+
+// Serve static files from the "client/build" directory
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// Define a route for the root URL
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+// Start the server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});
+npx create-react-app .
+npm install concurrently --save-dev
+"scripts": {
+  "start": "node server.js",
+  "client": "cd client && npm start",
+  "dev": "concurrently \"npm run start\" \"npm run client\""
+}
+npm run dev
